@@ -26,6 +26,7 @@ import org.LexGrid.LexBIG.Exceptions.LBInvocationException;
 import org.LexGrid.LexBIG.Exceptions.LBParameterException;
 import org.LexGrid.LexBIG.Extensions.Generic.MappingExtension;
 import org.LexGrid.LexBIG.LexBIGService.CodedNodeSet;
+import org.LexGrid.LexBIG.LexBIGService.CodedNodeSet.ActiveOption;
 import org.LexGrid.LexBIG.LexBIGService.CodedNodeSet.SearchDesignationOption;
 import org.LexGrid.codingSchemes.CodingScheme;
 import org.LexGrid.valueSets.ValueSetDefinition;
@@ -261,11 +262,40 @@ public final class CommonSearchFilterUtils {
 					lexCodedNodeSet = CommonSearchFilterUtils.filterLexCodedNodeSet(lexCodedNodeSet, cts2Filter);
 				}
 			}
+			
+			lexCodedNodeSet = CommonSearchFilterUtils.filterLexCodedNodeSet(lexCodedNodeSet, queryData.getReadContext());
 		}
 		
 		return lexCodedNodeSet;
 	}
 	
+	private static CodedNodeSet filterLexCodedNodeSet(
+			CodedNodeSet lexCodedNodeSet, ResolvedReadContext readContext) {
+		if(readContext != null) {
+			if(readContext.getActive() != null) {
+				ActiveOption activeOption;
+				switch(readContext.getActive()) {
+				case ACTIVE_AND_INACTIVE:
+					activeOption = ActiveOption.ALL;
+					break;
+				case ACTIVE_ONLY:
+					activeOption = ActiveOption.ACTIVE_ONLY;
+					break;
+				default:
+					throw new IllegalStateException("Illegal Active Option: " + readContext.getActive());
+				}
+				
+				try {
+					lexCodedNodeSet = lexCodedNodeSet.restrictToStatus(activeOption, null);
+				} catch (Exception e) {
+					throw new RuntimeException(e);
+				} 
+			}
+		}
+		
+		return lexCodedNodeSet;
+	}
+
 	public static CodedNodeSet filterLexCodedNodeSet(
 			CodedNodeSet lexCodedNodeSet,
 			ResolvedFilter cts2Filter){
