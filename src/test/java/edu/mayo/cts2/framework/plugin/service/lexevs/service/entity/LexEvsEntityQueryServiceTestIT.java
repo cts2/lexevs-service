@@ -8,11 +8,9 @@
 */
 package edu.mayo.cts2.framework.plugin.service.lexevs.service.entity;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -30,6 +28,7 @@ import edu.mayo.cts2.framework.model.entity.EntityDirectoryEntry;
 import edu.mayo.cts2.framework.model.entity.EntityListEntry;
 import edu.mayo.cts2.framework.model.service.core.NameOrURI;
 import edu.mayo.cts2.framework.model.service.core.Query;
+import edu.mayo.cts2.framework.model.service.core.types.ActiveOrAll;
 import edu.mayo.cts2.framework.model.util.ModelUtils;
 import edu.mayo.cts2.framework.plugin.service.lexevs.test.AbstractQueryServiceTest;
 import edu.mayo.cts2.framework.plugin.service.lexevs.utility.CommonTestUtils;
@@ -217,6 +216,124 @@ public class LexEvsEntityQueryServiceTestIT
 		assertNotNull("Expecting data returned but list is null", list);
 		String msg = "Expecting list.size() > 0, instead list.size() = " + list.size();
 		assertTrue(msg, list.size() > 0);		
+	}	
+	
+	@Test
+	public void testGetResourceSummaries_Filter_OnlyActive() throws Exception {
+				
+		// Create query
+		// ------------
+		EntityDescriptionQuery query = new EntityDescriptionQuery() {
+
+			@Override
+			public Query getQuery() {
+				return null;
+			}
+
+			@Override
+			public Set<ResolvedFilter> getFilterComponent() {
+				return new HashSet<ResolvedFilter>();
+			}
+
+			@Override
+			public ResolvedReadContext getReadContext() {
+				ResolvedReadContext context = new ResolvedReadContext();
+				context.setActive(ActiveOrAll.ACTIVE_ONLY);
+				
+				return context;
+			}
+
+			@Override
+			public EntitiesFromAssociationsQuery getEntitiesFromAssociationsQuery() {
+				return null;
+			}
+
+			@Override
+			public EntityDescriptionQueryServiceRestrictions getRestrictions() {
+				EntityDescriptionQueryServiceRestrictions query = new EntityDescriptionQueryServiceRestrictions();
+				query.getCodeSystemVersions().add(ModelUtils.nameOrUriFromName("Automobiles-1.0"));
+				
+				return query;
+			}
+			
+		};
+				
+		// Call getResourceSummaries from service
+		// --------------------------------------
+		Page page = new Page();
+		DirectoryResult<EntityDirectoryEntry> directoryResult = this.service.getResourceSummaries(query, null, page);
+		assertNotNull("Expecting data returned but instead directoryResult is null", directoryResult);
+
+		// Test results
+		// ------------
+		List<EntityDirectoryEntry> list = directoryResult.getEntries();		
+		assertNotNull("Expecting data returned but list is null", list);
+		assertTrue(list.size() > 0);
+		
+		for(EntityDirectoryEntry entry : list) {
+			assertTrue(! entry.getName().getName().equals("73"));
+		}
+	}	
+	
+	@Test
+	public void testGetResourceSummaries_Filter_ActiveAndInactive() throws Exception {
+				
+		// Create query
+		// ------------
+		EntityDescriptionQuery query = new EntityDescriptionQuery() {
+
+			@Override
+			public Query getQuery() {
+				return null;
+			}
+
+			@Override
+			public Set<ResolvedFilter> getFilterComponent() {
+				return new HashSet<ResolvedFilter>();
+			}
+
+			@Override
+			public ResolvedReadContext getReadContext() {
+				ResolvedReadContext context = new ResolvedReadContext();
+				context.setActive(ActiveOrAll.ACTIVE_AND_INACTIVE);
+				
+				return context;
+			}
+
+			@Override
+			public EntitiesFromAssociationsQuery getEntitiesFromAssociationsQuery() {
+				return null;
+			}
+
+			@Override
+			public EntityDescriptionQueryServiceRestrictions getRestrictions() {
+				EntityDescriptionQueryServiceRestrictions query = new EntityDescriptionQueryServiceRestrictions();
+				query.getCodeSystemVersions().add(ModelUtils.nameOrUriFromName("Automobiles-1.0"));
+				
+				return query;
+			}
+			
+		};
+				
+		// Call getResourceSummaries from service
+		// --------------------------------------
+		Page page = new Page();
+		DirectoryResult<EntityDirectoryEntry> directoryResult = this.service.getResourceSummaries(query, null, page);
+		assertNotNull("Expecting data returned but instead directoryResult is null", directoryResult);
+
+		// Test results
+		// ------------
+		List<EntityDirectoryEntry> list = directoryResult.getEntries();		
+		assertNotNull("Expecting data returned but list is null", list);
+		assertTrue(list.size() > 0);
+		
+		for(EntityDirectoryEntry entry : list) {
+			if(entry.getName().getName().equals("73")) {
+				return;
+			}
+		}
+		
+		fail("Didn't find inactive concept '73'");
 	}	
 
 	@Test
